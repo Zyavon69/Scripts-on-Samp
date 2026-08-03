@@ -39,10 +39,10 @@ function levenstain(str1, str2)
     return matrix[len1][len2]
 end
 
-local command = {
+local commands = {
 }
 
-function filterCommands(strUsers) 
+function filterCommands(strUsers, command) 
     strUsers = string.lower(strUsers)
 
     local tableStr = {}
@@ -79,7 +79,7 @@ end
 
 function main()
 
-    addCommandsList(command)
+    addCommandsList(commands)
 
     lua_thread.create(function ()
         local oldPrefix
@@ -97,34 +97,7 @@ function main()
 
                 if userInput ~= lastInsertedCommand then
                     oldPrefix = currentText
-                    local tableStr = {}
-                    local finalyTable = {}
-    
-                    for i = 1, #command do
-                        local dist = levenstain(oldPrefix, command[i])
-                        if dist <= 5 then
-                            local entry = {}
-                            entry.cmd = command[i]
-                            entry.dist = dist
-                            table.insert(tableStr, entry)
-                        end
-                    end
-
-                    for i = 1, #tableStr - 1, 1 do
-                        for j = 1,#tableStr - i, 1 do
-                            if tableStr[j].dist > tableStr[j + 1].dist then
-                                local temp = tableStr[j]
-                                tableStr[j] = tableStr[j + 1]
-                                tableStr[j + 1] = temp
-                            end
-                        end
-                    end
-
-                    for i = 1,  math.min(5, #tableStr) do
-                        table.insert(finalyTable, tableStr[i].cmd)
-                    end
-
-                    newText = finalyTable
+                    newText = filterCommands(oldPrefix, commands)
                     countTab = 1
                 end
 
