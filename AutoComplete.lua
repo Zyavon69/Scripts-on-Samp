@@ -1,18 +1,14 @@
 --local sampev = require 'samp.events'
 require 'moonloader'
 
-
-
-function addCommandsList(command)
+--[[function addCommandsList(command)
     for line in io.lines("moonloader\\command.txt") do
-    line = line:gsub("\r", ""):gsub("^%s*(.-)%s*$", "%1") -- удаляем \r и пробелы по краям
-    if line ~= "" then
-        table.insert(command, line)
+    line = line:gsub("\r", ""):gsub("^%s*(.-)%s*$", "%1") 
+        if line ~= "" then
+            table.insert(command, line)
+        end
     end
-end
-end
-
-
+end]]-- 
 
 
 function levenstain(str1, str2)                        
@@ -49,13 +45,31 @@ function levenstain(str1, str2)
     return matrix[len1][len2]
 end
 
-local command = {}
+local command = {
+    "/me",
+    "/eject",
+    "mycrew",
+    "myfract"
+}
 
-function filterCommands(strUsers)
+function filterCommands(prefix)
 
+    local result = {}
+    for _, cmd in ipairs(command) do
+        if cmd:sub(1, #prefix) == prefix then
+            table.insert(result, cmd)
+        end
+    end
+    return result
+end
+
+--[[function filterCommands(strUsers)
+    
     if type(strUsers) ~= "string" then
         return {}
     end 
+
+    strUsers = string.lower(strUsers)
 
     local tableStr = {}
     local finalyTable = {}
@@ -86,82 +100,77 @@ function filterCommands(strUsers)
     end
 
     return finalyTable
-end
+end]]-- 
 
 function main()
-    addCommandsList(command)
-    local countTab
-    print("len command",#command)
-
-    for i in ipairs(command) do
-        print(command[i])
-    end
-        while true do
-            local ok,err = pcall(function ()
-                lua_thread.create(function ()
-                    local lastInsertedCommand
-                    local oldPrefix
-                    local newText
-                    local countTab = 1
-                    while true do
-                        wait(50)
-                        if sampIsChatInputActive() then
-                            local currentText = sampGetChatInputText()
-                            if type(currentText) ~= string then
-                                currentText = ""
-                            end
+    --addCommandsList(command)
+    
+    --local ok,err = pcall(function ()
+        lua_thread.create(function ()
+            local lastInsertedCommand
+            local userInput
+            local oldPrefix
+            local newText
+            local countTab = 1
+            while true do
+                wait(50)
+                if sampIsChatInputActive() then
+                    local currentText = sampGetChatInputText()
+                    userInput = sampGetChatInputText()
                 
-                            if type(currentText) ~= "string" then
-                                print("Это не строка")
-                                currentText = tostring(currentText)
-                            else
-                                if currentText ~= lastInsertedCommand then 
-
+                    if type(currentText) ~= "string" then
+                        print("Это не строка")
+                        currentText = tostring(currentText)
+                    end
+                        if userInput ~= lastInsertedCommand then 
                             oldPrefix = currentText
-                            local ok, result = pcall(filterCommands, oldPrefix)
-                            if ok then
-                                newText = result
-                            else
-                                print("ошибка в filterCommands", result)
-                                newText = {}
+                            --local ok, result = pcall(filterCommands, oldPrefix)
+                            --if ok then
+                                newText = filterCommands(oldPrefix)
+                            --else
+                                --print("ошибка в filterCommands", result)
+                                --newText = {}
                             end
                             countTab = 1
                         end
-                    end
-
 
                     if isKeyJustPressed(0x09) then
                         if newText ~= nil then
                             if type(newText) == "table" then
                                 if  #newText >= countTab then
-                                    print("Передаю в SAMP:", tostring(newText[countTab]), "длина:", #tostring(newText[countTab]))
                                     
                                     local text = tostring(newText[countTab])
-                                    text = text:gsub("%c", "")
-                                    local ok, err = pcall(sampSetChatInputText, text)
-                                    if not ok then
-                                        print("Ошибка в sampGetChatInputText",err)
-                                        return
+                                    --text = text:gsub("%c", "")
+                                    if text and text ~= "" then
+                                        sampSetChatInputText(text)
+                                        --local ok, err = pcall(sampSetChatInputText, text)
+                                    --if not ok then
+                                        --print("Ошибка в sampGetChatInputText",err)
+                                        --return
+                                        lastInsertedCommand = text
+                                        countTab = countTab + 1
                                     end
-
-                                    lastInsertedCommand = text
-                                    countTab = countTab + 1
+                                elseif #newText == 0 then
+                                    return
                                 else
                                     countTab = 1
-                                end 
+                                end     
+                                
                             end
                         else 
-                            print("Ошибка в пустой таблице")
+                            newText = {}
                         end 
                     end
                 end 
-            end    
-        end)
-            
-        if not ok then
-            print("[AutoComplete] Ошибка в потоке",err)
-            wait(100)
-        end
-        end)        
+            end)    
+        --end
+        --while true do
+            --wait(50)
+        --end
+    --end)    
+    --[[if not ok then
+        print("[AutoComplete] Ошибка в потоке",err)
+        wait(1000)
     end
+    wait(50)--]]
 end
