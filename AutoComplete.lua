@@ -43,45 +43,51 @@ local commands = {
 }
 
 function filterCommands(strUsers, command) 
-    strUsers = string.lower(strUsers)
+    if type(strUsers) ~= "string" then
+        strUsers = tostring(strUsers)
+    end
 
+    strUsers = string.lower(strUsers)
     local tableStr = {}
-    local finalyTable = {}
+    local finalyStr = {}
     
     for i = 1, #command do
-        
         local dist = levenstain(strUsers, command[i])
-
-        if dist <= 5 then
-            local entry = {}
-            entry.cmd = command[i]
-            entry.dist = dist
-            table.insert(tableStr, entry)
+        print("org" .. strUsers)
+        print("command - " .. command[i] .. " dist - " .. dist)
+        if dist < 5 then
+            table.insert(tableStr, {command[i], dist})
         end
     end
 
-    for i = 1, #tableStr - 1, 1 do
-        for j = 1,#tableStr - i, 1 do
-            if tableStr[j].dist > tableStr[j + 1].dist then
-                local temp = tableStr[j]
+    for i = 1, #tableStr do
+        for j = 1, #tableStr - i do
+            if tableStr[j][2] > tableStr[j  + 1][2] then
+                local tmp = tableStr[j]
                 tableStr[j] = tableStr[j + 1]
-                tableStr[j + 1] = temp
+                tableStr[j + 1] = tmp
             end
         end
     end
 
-    for i = 1,  math.min(5, #tableStr) do
-        table.insert(finalyTable, tableStr[i].cmd)
+    print("After sort")
+
+    for i = 1, #tableStr do
+        print("org " .. strUsers)
+        print("command " ..  tableStr[i][1] .. " dist - " .. tableStr[i][2])
     end
 
-    return finalyTable
+    for i = 1, math.min(5, #tableStr) do
+        finalyStr[i] = tableStr[i][1]
+    end
+
+    return finalyStr
+
 end
 
 function main()
-
     addCommandsList(commands)
-
-    lua_thread.create(function ()
+   
         local oldPrefix
         local newText
         local countTab = 1
@@ -113,5 +119,4 @@ function main()
 
             end
         end
-    end)
 end
